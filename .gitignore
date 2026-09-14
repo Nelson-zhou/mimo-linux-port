@@ -1,0 +1,21 @@
+# Packages & Binaries
+*.deb
+*.rpm
+*.tar.gz
+*.tar.xz
+*.zip
+*.bin
+
+# Temporary & Build files
+/tmp/
+build/
+dist/
+*.log
+
+# System & Editor files
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
