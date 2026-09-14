@@ -2,7 +2,11 @@
 set -euo pipefail
 
 # mimo-linux-port: Automated Debian package builder for Xiaomi MiMo Desktop
-# Unpacks upstream package, applies scroll & IME patches, and repacks clean deb.
+# Features:
+# - Auto-downloads official package from Xiaomi CDN if not provided
+# - Extracts ASAR and bundles official Linux Electron runtime
+# - Applies viewport scroll-lock and focus-stealing patches
+# - Generates multi-size icons, desktop launcher, and control scripts
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,10 +24,14 @@ echo -e "${BLUE}======================================================${NC}"
 INPUT_PKG="${1:-}"
 OUTPUT_DEB="${2:-}"
 
-# 1. Discover input package if not specified
+BUILD_TMP=$(mktemp -d /tmp/mimo-deb-build-XXXXXX)
+trap 'rm -rf "$BUILD_TMP"' EXIT
+
+# 1. Discover input package or download from official CDN
 if [ -z "$INPUT_PKG" ]; then
   CANDIDATES=(
     "./XiaomiMiMo-x64.deb"
+    "./XiaomiMiMo.deb"
     "./xiaomi-mimo-desktop.deb"
     "$HOME/xiaomi-mimo-desktop-26.909.91205-linux-x64-fixed.deb"
     "$HOME/.config/XiaomiMiMoDesktop/updates/XiaomiMiMo-26.909.91205-x64.deb"
@@ -38,14 +46,17 @@ if [ -z "$INPUT_PKG" ]; then
 fi
 
 if [ -z "$INPUT_PKG" ] || [ ! -f "$INPUT_PKG" ]; then
-  echo -e "${RED}[ERROR] Input package not found!${NC}"
-  echo "Usage: $0 <path-to-upstream.deb> [output-path.deb]"
-  exit 1
+  echo -e "${BLUE}[*] 未指定输入安装包，正在从小米官方 CDN 自动获取最新版本...${NC}"
+  MANIFEST_URL="https://mimocode-cdn.xiaomimimo.com/mimocode/mimodesktop/manifest.json"
+  OFFICIAL_URL=$(curl -sSL "$MANIFEST_URL" | grep -o 'https://[^"]*x64\.deb' | head -n 1 || true)
+  if [ -z "$OFFICIAL_URL" ]; then
+    OFFICIAL_URL="https://mimocode-cdn.xiaomimimo.com/mimocode/mimodesktop/XiaomiMiMo-26.909.91205-x64.deb"
+  fi
+  echo -e "${GREEN}[+] 官方下载直链: $OFFICIAL_URL${NC}"
+  INPUT_PKG="$BUILD_TMP/XiaomiMiMo-upstream.deb"
+  echo -e "${BLUE}[*] 正在下载官方安装包 (约 240MB)...${NC}"
+  curl -# -fSL -o "$INPUT_PKG" "$OFFICIAL_URL"
 fi
-
-# 2. Prepare temporary build workspace
-BUILD_TMP=$(mktemp -d /tmp/mimo-deb-build-XXXXXX)
-trap 'rm -rf "$BUILD_TMP"' EXIT
 
 PKG_ROOT="$BUILD_TMP/pkg"
 mkdir -p "$PKG_ROOT"
@@ -60,7 +71,7 @@ else
   mkdir -p "$PKG_ROOT/DEBIAN"
 fi
 
-# 3. Detect version from control or default
+# 2. Detect version from control or default
 VERSION="26.909.91205"
 if [ -f "$PKG_ROOT/DEBIAN/control" ]; then
   DETECTED_VER=$(grep -E "^Version:" "$PKG_ROOT/DEBIAN/control" | awk '{print $2}' || true)
@@ -73,10 +84,36 @@ if [ -z "$OUTPUT_DEB" ]; then
   OUTPUT_DEB="$PROJECT_ROOT/xiaomi-mimo-desktop_${VERSION}-linux-x64.deb"
 fi
 
-# Ensure /opt/mimo-desktop-cn structure
+# 3. Handle official vs community package layout
 OPT_DIR="$PKG_ROOT/opt/mimo-desktop-cn"
-if [ ! -d "$OPT_DIR" ] && [ -d "$PKG_ROOT/out" ]; then
-  mkdir -p "$PKG_ROOT/opt/mimo-desktop-cn"
+OFFICIAL_OPT="$PKG_ROOT/opt/Xiaomi MiMo"
+
+if [ -d "$OFFICIAL_OPT" ]; then
+  echo -e "${BLUE}[*] Processing official Xiaomi package structure...${NC}"
+  mkdir -p "$OPT_DIR"
+  ASAR_FILE="$OFFICIAL_OPT/resources/app.asar"
+  if [ -f "$ASAR_FILE" ]; then
+    echo -e "${BLUE}[*] Extracting application bundle from ASAR...${NC}"
+    python3 "$PROJECT_ROOT/scripts/unpack_asar.py" "$ASAR_FILE" "$OPT_DIR"
+  fi
+
+  if [ -d "$OFFICIAL_OPT/resources/app.asar.unpacked/node_modules" ]; then
+    echo -e "${BLUE}[*] Merging native binary addons...${NC}"
+    cp -r "$OFFICIAL_OPT/resources/app.asar.unpacked/node_modules/"* "$OPT_DIR/node_modules/" || true
+  fi
+
+  # Copy bundled official Electron runtime to bin/
+  echo -e "${BLUE}[*] Setting up official Electron runtime...${NC}"
+  mkdir -p "$OPT_DIR/bin"
+  cp "$OFFICIAL_OPT/xiaomi-mimo-desktop" "$OPT_DIR/bin/"
+  cp -r "$OFFICIAL_OPT"/*.so* "$OPT_DIR/bin/" 2>/dev/null || true
+  cp -r "$OFFICIAL_OPT"/*.bin "$OPT_DIR/bin/" 2>/dev/null || true
+  cp -r "$OFFICIAL_OPT"/*.pak "$OPT_DIR/bin/" 2>/dev/null || true
+  cp -r "$OFFICIAL_OPT"/*.dat "$OPT_DIR/bin/" 2>/dev/null || true
+  chmod +x "$OPT_DIR/bin/xiaomi-mimo-desktop"
+  rm -rf "$OFFICIAL_OPT"
+elif [ ! -d "$OPT_DIR" ] && [ -d "$PKG_ROOT/out" ]; then
+  mkdir -p "$OPT_DIR"
   mv "$PKG_ROOT/out" "$OPT_DIR/"
   [ -d "$PKG_ROOT/assets" ] && mv "$PKG_ROOT/assets" "$OPT_DIR/"
   [ -d "$PKG_ROOT/node_modules" ] && mv "$PKG_ROOT/node_modules" "$OPT_DIR/"

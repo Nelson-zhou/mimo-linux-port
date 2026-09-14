@@ -66,26 +66,33 @@ flowchart LR
 
 ### 快速开始
 
-#### 方法一：一键本地安装 (推荐)
+#### 方法一：一键全自动安装 (极力推荐)
 
-如果您本地已有官方 `.deb` 安装包（或通过客户端内更新下载的包）：
+即便您本地是全新的纯净 Linux 系统、没有任何 MiMo 安装包，也只需运行这一条命令：
 
 ```bash
-git clone https://github.com/your-username/mimo-linux-port.git
+git clone https://github.com/Nelson-zhou/mimo-linux-port.git
 cd mimo-linux-port
 sudo ./scripts/install.sh
 ```
 
-脚本将自动寻找本地的官方安装包、解包应用、打入滚动条与焦点补丁、安装启动器与全套高清图标。
+**工作流程（全自动）**：
+1. 脚本自动探测本地包；若本地无安装包，**自动向小米官方 CDN 请求下载最新官方原版 `.deb`**；
+2. 自动解包并提取核心代码与官方 Electron 运行时；
+3. 现场打入防回弹、防焦点劫持补丁；
+4. 自动生成 48px~512px 全套高清桌面图标，注册系统菜单与快捷方式。
 
-#### 方法二：重新打包为干净的 `.deb`
+> 💡 **手动下载备用**：若您希望自行下载官方原版包，可点击：
+> [小米官方 Linux 版 deb 下载直链](https://mimocode-cdn.xiaomimimo.com/mimocode/mimodesktop/XiaomiMiMo-26.909.91205-x64.deb)（官方版本清单：[manifest.json](https://mimocode-cdn.xiaomimimo.com/mimocode/mimodesktop/manifest.json)）。下载后将文件放于当前目录再执行脚本即可。
 
-如果您需要生成一个已打好补丁的 `.deb` 安装包以便分发到其他个人机器或归档：
+#### 方法二：一键本地重新打包为 `.deb`
+
+如果您需要生成一个已打好补丁的独立安装包以便离线安装或分发给其他个人设备：
 
 ```bash
 cd mimo-linux-port
-./scripts/build_deb.sh [路径/官方XiaomiMiMo.deb]
-# 输出: xiaomi-mimo-desktop_xxxx-linux-x64.deb
+./scripts/build_deb.sh
+# 脚本若未指定参数将自动拉取官方最新包并输出: xiaomi-mimo-desktop_xxxx-linux-x64.deb
 sudo dpkg -i xiaomi-mimo-desktop_*-linux-x64.deb
 ```
 
@@ -155,14 +162,14 @@ xiaomi-mimo-desktop
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/mimo-linux-port.git
+git clone https://github.com/Nelson-zhou/mimo-linux-port.git
 cd mimo-linux-port
 
-# Run automated installer
+# Run automated installer (auto-downloads official deb from Xiaomi CDN if not present)
 sudo ./scripts/install.sh
 
 # Or build a standalone patched .deb
-./scripts/build_deb.sh /path/to/official.deb
+./scripts/build_deb.sh
 ```
 
 ---
