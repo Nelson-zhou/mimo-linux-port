@@ -26,6 +26,16 @@ else
   SUDO=""
 fi
 
+# Ensure critical shared libraries are present
+if command -v apt-get >/dev/null 2>&1; then
+  echo -e "${BLUE}[*] Checking system dependencies...${NC}"
+  if ! /sbin/ldconfig -p 2>/dev/null | grep -q "libsecret-1.so.0"; then
+    echo -e "${YELLOW}[!] Installing libsecret-1-0 and libxtst6...${NC}"
+    $SUDO apt-get update -qq || true
+    $SUDO apt-get install -y -qq libsecret-1-0 libxtst6 || true
+  fi
+fi
+
 # 1. Detect source package
 SOURCE_PKG=""
 CANDIDATES=(

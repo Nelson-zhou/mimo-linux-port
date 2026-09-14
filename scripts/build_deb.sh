@@ -139,9 +139,8 @@ Version: ${VERSION}
 Architecture: amd64
 Maintainer: Xiaomi MiMo Community Linux Team
 Section: utils
-Priority: optional
-Depends: libc6 (>= 2.31), libnotify4, xdg-utils
-Recommends: libgtk-3-0
+Depends: libc6 (>= 2.31), libnotify4, xdg-utils, libsecret-1-0, libnss3, libasound2 | libasound2t64, libxtst6, libxrandr2
+Recommends: libgtk-3-0, zenity
 Description: Xiaomi MiMo Desktop Client (Linux Port)
  Xiaomi MiMo Desktop AI assistant for Linux x64 with scroll-lock,
  focus-stealing, and Wayland IME compatibility fixes.

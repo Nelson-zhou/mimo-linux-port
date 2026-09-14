@@ -101,6 +101,37 @@ sudo dpkg -i xiaomi-mimo-desktop_*-linux-x64.deb
 
 ---
 
+### 常见问题与闪退排查 (Troubleshooting)
+
+如果在启动时遇到闪退或无法启动，请优先**在终端中直接运行命令查看详细输出**：
+```bash
+xiaomi-mimo-desktop
+# 或直接运行启动脚本
+/opt/mimo-desktop-cn/start.sh
+```
+
+常见原因与解决方案：
+1. **Ubuntu 24.04+ / SUID Sandbox 拦截**：
+   - 错误表现：`The SUID sandbox helper binary was found, but is not configured correctly`。
+   - 解决方案：`start.sh` 已默认包含 `--no-sandbox` 参数，若直接运行二进制请务必带上该参数。
+2. **单实例锁残留导致的静默退出**：
+   - 错误表现：点击图标后瞬间消失，终端运行返回码 0。
+   - 解决方案：新版 `start.sh` 会自动检测并清理孤儿锁文件；亦可手动执行：
+     ```bash
+     killall -9 xiaomi-mimo-desktop electron 2>/dev/null
+     rm -f ~/.config/XiaomiMiMoDesktop/Singleton*
+     ```
+3. **缺少系统运行库（`libsecret-1.so.0` / `libxtst` 等）**：
+   - 错误表现：`cannot open shared object file: libsecret-1.so.0`。
+   - 解决方案：
+     - Ubuntu / Debian: `sudo apt install -y libsecret-1-0 libxtst6`
+     - Arch Linux: `sudo pacman -S libsecret libxtst`
+     - Fedora: `sudo dnf install -y libsecret libXtst`
+4. **GPU 硬件加速与显卡驱动冲突**：
+   - 解决方案：尝试加上 `--disable-gpu` 启动：`xiaomi-mimo-desktop --disable-gpu`。
+
+---
+
 <a name="english"></a>
 ## 🌐 English Documentation
 
