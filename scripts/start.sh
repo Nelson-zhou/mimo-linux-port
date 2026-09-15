@@ -137,10 +137,17 @@ if [ ! -f "$APP_DIR/package.json" ] && [ -f "$APP_DIR/out/main/launch.mjs" ]; th
   ENTRY_TARGET="$APP_DIR/out/main/launch.mjs"
 fi
 
+# Read the app version from package.json so Electron's app.getVersion() returns
+# the correct value (e.g. 26.914.142245) instead of "0.0" (the default_app fallback).
+# This prevents the built-in updater from thinking version=0.0 and downloading
+# older packages to "upgrade" to.
+APP_VERSION="$(python3 -c "import json,sys; print(json.load(open('$APP_DIR/package.json')).get('version','0.0'))" 2>/dev/null || echo "0.0")"
+
 exec "$ELECTRON_BIN" \
   --no-sandbox \
   --disable-dev-shm-usage \
   --disable-gpu-sandbox \
+  --app-version="$APP_VERSION" \
   "${OZONE_FLAGS[@]}" \
   "$ENTRY_TARGET" \
   "$@"
