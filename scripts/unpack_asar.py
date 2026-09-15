@@ -17,18 +17,19 @@ def extract_asar(asar_path, dest_dir):
     os.makedirs(dest_dir, exist_ok=True)
 
     with open(asar_path, 'rb') as f:
-        # ASAR header format:
+        # ASAR header format (Chromium Pickle):
         # 4 bytes: uint32 (size 4)
-        # 4 bytes: uint32 (header size + 8)
-        # 4 bytes: uint32 (header size + 4)
+        # 4 bytes: uint32 (header size)
+        # 4 bytes: uint32 (header size - 4)
         # 4 bytes: uint32 (header json string length)
-        # json string
+        # json string (padded to 4-byte boundary)
         magic = f.read(4)
+        header_size = struct.unpack('<I', f.read(4))[0]
         f.seek(12)
         header_len = struct.unpack('<I', f.read(4))[0]
         header_raw = f.read(header_len).decode('utf-8')
         header = json.loads(header_raw)
-        payload_base = 16 + header_len
+        payload_base = 8 + header_size
 
         def walk(node, current_dir):
             os.makedirs(current_dir, exist_ok=True)

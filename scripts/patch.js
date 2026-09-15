@@ -70,7 +70,34 @@ for (const edit of edits) {
 if (applied > 0) {
   fs.writeFileSync(targetFile, code, 'utf8');
   console.log(`[SUCCESS] Patched ${targetFile} successfully.`);
-} else {
+} else if (!path.basename(targetFile).includes('index.mjs')) {
   console.error('[ERROR] No patches could be applied.');
   process.exit(1);
 }
+
+// -----------------------------------------------------------------------------
+// Also patch main/index.mjs for Linux machine-id if present
+// -----------------------------------------------------------------------------
+function patchMainIndex(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  let mainCode = fs.readFileSync(filePath, 'utf8');
+  const target = 'function Nj(){if(process.platform==="win32"){';
+  const replacement = 'function Nj(){if(process.platform==="linux"){try{const t=X.readFileSync("/etc/machine-id","utf8").trim();if(t&&!bl(t))return t}catch{}try{const t=X.readFileSync("/var/lib/dbus/machine-id","utf8").trim();if(t&&!bl(t))return t}catch{}}if(process.platform==="win32"){';
+  if (mainCode.includes(replacement)) {
+    console.log("[INFO] Patch 'Linux machine-id deviceId fix' already applied to main/index.mjs.");
+    return;
+  }
+  if (mainCode.includes(target)) {
+    mainCode = mainCode.replace(target, replacement);
+    fs.writeFileSync(filePath, mainCode, 'utf8');
+    console.log("[OK] Applied patch: Linux machine-id deviceId fix to main/index.mjs");
+  }
+}
+
+if (path.basename(targetFile) === 'index.mjs') {
+  patchMainIndex(targetFile);
+} else {
+  const candidateMain = path.resolve(path.dirname(targetFile), '../../main/index.mjs');
+  patchMainIndex(candidateMain);
+}
+

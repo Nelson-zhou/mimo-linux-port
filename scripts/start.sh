@@ -124,10 +124,15 @@ fi
 # -----------------------------------------------------------------------------
 # 5. Launch with Sandbox & GPU Flags
 # -----------------------------------------------------------------------------
+ENTRY_TARGET="$APP_DIR"
+if [ ! -f "$APP_DIR/package.json" ] && [ -f "$APP_DIR/out/main/launch.mjs" ]; then
+  ENTRY_TARGET="$APP_DIR/out/main/launch.mjs"
+fi
+
 exec "$ELECTRON_BIN" \
   --no-sandbox \
   --disable-dev-shm-usage \
   --disable-gpu-sandbox \
   "${OZONE_FLAGS[@]}" \
-  "$APP_DIR/out/main/launch.mjs" \
+  "$ENTRY_TARGET" \
   "$@"
