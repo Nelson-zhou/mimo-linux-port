@@ -82,16 +82,24 @@ if [ "$OZONE_PLATFORM" = "wayland" ]; then
     "--wayland-text-input-version=3"
   )
 else
-  # When running in X11/XWayland mode:
-  # 1. Unset WAYLAND_DISPLAY and force XDG_SESSION_TYPE=x11 so Electron's internal
-  #    auto-detection in out/main/index.mjs does not dynamically switch to wayland.
+  # x11 / XWayland mode:
+  # 26.914+ introduced C4() which auto-detects Wayland via env vars and overrides
+  # the CLI --ozone-platform flag. Scrub Wayland hints from the environment so
+  # C4("x11") correctly returns "x11" instead of falling back to "wayland".
   unset WAYLAND_DISPLAY
-  export XDG_SESSION_TYPE="x11"
+  export XDG_SESSION_TYPE=x11
 
-  # 2. Prevent cached preferences from overriding displayServer back to wayland/auto
-  if [ -f "$PREFS_FILE" ]; then
-    sed -i -E 's/"displayServer"[[:space:]]*:[[:space:]]*"(auto|wayland)"/"displayServer": "x11"/g' "$PREFS_FILE" 2>/dev/null || true
-  fi
+  # Also patch all known preferences.json locations to pin displayServer=x11.
+  # Electron may read from "XiaomiMiMoDesktop", "Xiaomi MiMo", or "Electron" dirs.
+  for PREFS_FILE in \
+    "$CONFIG_DIR/preferences.json" \
+    "${XDG_CONFIG_HOME:-$HOME/.config}/Xiaomi MiMo/preferences.json" \
+    "${XDG_CONFIG_HOME:-$HOME/.config}/Electron/preferences.json"; do
+    if [ -f "$PREFS_FILE" ]; then
+      sed -i -E 's/"displayServer"[[:space:]]*:[[:space:]]*"(auto|wayland)"/"displayServer": "x11"/g' \
+        "$PREFS_FILE" 2>/dev/null || true
+    fi
+  done
 fi
 
 # -----------------------------------------------------------------------------
