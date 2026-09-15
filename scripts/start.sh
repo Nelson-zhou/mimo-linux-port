@@ -64,7 +64,8 @@ fi
 # -----------------------------------------------------------------------------
 # 3. Display Server & IME Configuration
 # -----------------------------------------------------------------------------
-# Defaulting to x11 (XWayland) guarantees 100% working IME candidate box positioning.
+# Defaulting to x11 (XWayland) guarantees 100% working IME candidate box positioning
+# and prevents blank white screens caused by Wayland GPU/canvas pipeline desync.
 # Set MIMO_OZONE_PLATFORM=wayland to force native Wayland.
 DEFAULT_OZONE="x11"
 OZONE_PLATFORM="${MIMO_OZONE_PLATFORM:-$DEFAULT_OZONE}"
@@ -73,11 +74,24 @@ OZONE_FLAGS=(
   "--ozone-platform=$OZONE_PLATFORM"
 )
 
+PREFS_FILE="$CONFIG_DIR/preferences.json"
+
 if [ "$OZONE_PLATFORM" = "wayland" ]; then
   OZONE_FLAGS+=(
     "--enable-wayland-ime"
     "--wayland-text-input-version=3"
   )
+else
+  # When running in X11/XWayland mode:
+  # 1. Unset WAYLAND_DISPLAY and force XDG_SESSION_TYPE=x11 so Electron's internal
+  #    auto-detection in out/main/index.mjs does not dynamically switch to wayland.
+  unset WAYLAND_DISPLAY
+  export XDG_SESSION_TYPE="x11"
+
+  # 2. Prevent cached preferences from overriding displayServer back to wayland/auto
+  if [ -f "$PREFS_FILE" ]; then
+    sed -i -E 's/"displayServer"[[:space:]]*:[[:space:]]*"(auto|wayland)"/"displayServer": "x11"/g' "$PREFS_FILE" 2>/dev/null || true
+  fi
 fi
 
 # -----------------------------------------------------------------------------
