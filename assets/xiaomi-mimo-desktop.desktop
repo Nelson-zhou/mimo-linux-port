@@ -8,6 +8,6 @@ Icon=/opt/mimo-desktop-cn/assets/icon.png
 Type=Application
 Categories=Development;Utility;Office;
 StartupNotify=true
-StartupWMClass=xiaomi-mimo-desktop
+StartupWMClass=Xiaomi MiMo
 MimeType=x-scheme-handler/xiaomi-mimo;
 Terminal=false
