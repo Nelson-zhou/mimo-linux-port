@@ -1,16 +1,28 @@
-# Packages & Binaries
+# Packages & Binaries (Proprietary Files)
 *.deb
 *.rpm
 *.tar.gz
 *.tar.xz
 *.zip
 *.bin
+*.asar
 
 # Temporary & Build files
 /tmp/
 build/
 dist/
 *.log
+*.dump
+*.pcap
+*.har
+
+# Secrets, Environment & Privacy
+.env
+.env.*
+!.env.example
+*.token
+*.cookie
+*.session
 
 # System & Editor files
 .DS_Store

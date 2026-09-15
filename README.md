@@ -137,6 +137,15 @@ xiaomi-mimo-desktop
 4. **GPU 硬件加速与显卡驱动冲突**：
    - 解决方案：尝试加上 `--disable-gpu` 启动：`xiaomi-mimo-desktop --disable-gpu`。
 
+### 🛡️ Git 安全审查与个人隐私守卫
+
+本项目严格执行安全、合规与隐私保护规范。在执行任何 `git commit` 或 `git push` 前，请务必参阅：
+- 📘 **[Git 安全合规与隐私守卫指南 (SECURITY_GUARD.md)](SECURITY_GUARD.md)**
+
+两项绝对红线：
+1. **个人隐私与机密凭证零泄露**：严禁提交真实手机号、身份证、个人邮箱、本地绝对物理路径、小米账号 Token/Cookie 或 AI 交互历史；
+2. **商业版权与法律合规零违规**：严格遵循 Patcher 架构，绝不托管官方闭源二进制文件（`.deb`、`.asar`），严禁包含任何破解绕过或恶意木马代码。
+
 ---
 
 <a name="english"></a>
@@ -171,6 +180,13 @@ sudo ./scripts/install.sh
 # Or build a standalone patched .deb
 ./scripts/build_deb.sh
 ```
+
+---
+
+### 🛡️ Security & Privacy Guard
+
+This repository strictly enforces privacy protection and legal compliance. Before any `git commit` or `git push`, please review:
+- 📘 **[Security & Privacy Guard Guidelines (SECURITY_GUARD.md)](SECURITY_GUARD.md)**
 
 ---
 
